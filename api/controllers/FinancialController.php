@@ -29,6 +29,30 @@ class FinancialController extends Controller
     ) {
     }
 
+    /**
+     * Best available date for a payment.
+     *
+     * Live rows have paid_on AND paid_at both null while created_at is set,
+     * so keying the monthly series on paid_on alone produced an empty chart
+     * and an "undated" count equal to every payment. Falls back through to
+     * the recorded date rather than dropping the row -- a payment that exists
+     * belongs somewhere on the timeline. Callers should treat this as
+     * "recorded" rather than strictly "paid".
+     *
+     * @param array<string, mixed> $payment
+     */
+    private static function paymentDate(array $payment): ?string
+    {
+        foreach (['paid_on', 'paid_at', 'created_at'] as $field) {
+            $value = $payment[$field] ?? null;
+            if (is_string($value) && strlen($value) >= 7) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
     public function summary()
     {
         $payments = $this->payments->recent(5000);
@@ -37,9 +61,9 @@ class FinancialController extends Controller
         $latest = null;
         foreach ($payments as $p) {
             $revenue += (float) ($p['amount'] ?? 0);
-            $paidOn = $p['paid_on'] ?? null;
-            if ($paidOn !== null && ($latest === null || $paidOn > $latest)) {
-                $latest = $paidOn;
+            $when = self::paymentDate($p);
+            if ($when !== null && ($latest === null || $when > $latest)) {
+                $latest = $when;
             }
         }
 
@@ -70,12 +94,12 @@ class FinancialController extends Controller
         $byMonth = [];
         $undated = 0;
         foreach ($payments as $p) {
-            $paidOn = $p['paid_on'] ?? null;
-            if (!is_string($paidOn) || strlen($paidOn) < 7) {
+            $when = self::paymentDate($p);
+            if ($when === null) {
                 $undated++;
                 continue;
             }
-            $month = substr($paidOn, 0, 7);
+            $month = substr($when, 0, 7);
             $byMonth[$month] ??= ['month' => $month, 'total' => 0.0, 'count' => 0];
             $byMonth[$month]['total'] += (float) ($p['amount'] ?? 0);
             $byMonth[$month]['count']++;
