@@ -75,10 +75,11 @@ if (!$dryRun) {
     );
     $say("ok: id={$user->id}");
 }
-if (!$user) {
-    $say('(dry run -- no user id yet, stopping before RBAC)');
-    exit(0);
-}
+// A dry run against a not-yet-existing user must still report on the RBAC
+// side. Bailing here made --dry-run useless in the one case it matters most:
+// a fresh account, where a missing rbac_permissions row is exactly what would
+// 403 the reviewer later. Carry on with $user null and skip only the final
+// user->role mapping, which is the one step that genuinely needs an id.
 
 /** @var BiseraDbClient $db */
 $db = app(BiseraDbClient::class);
@@ -118,7 +119,7 @@ foreach (PERMISSIONS as $key) {
 }
 
 echo "== 4. user -> role mapping ==\n";
-if ($dryRun || !$role) {
+if ($dryRun || !$role || !$user) {
     $say('would map the user to ' . ROLE_KEY);
 } else {
     $db->upsert(
