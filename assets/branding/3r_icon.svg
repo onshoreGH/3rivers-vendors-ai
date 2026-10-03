@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A4A35"/>
+      <stop offset="1" stop-color="#1FA463"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Three currents sweeping on a diagonal, narrowing and drawing together
+       toward the upper right. Depth comes from the three opacities rather
+       than from a literal junction: every version that actually joined the
+       channels read as an object (fork, tree, cable) at icon size. The
+       bands taper and converge, which is what carries "three rivers"
+       without three equal-weight waves. -->
+  <g fill="#FFFFFF" transform="translate(0,-48)">
+    <!-- back current, lightest -->
+    <path d="M 150 452
+             C 330 348, 566 306, 882 268
+             L 882 336
+             C 574 376, 342 420, 150 526 Z"
+          opacity="0.48"/>
+
+    <!-- middle current -->
+    <path d="M 150 606
+             C 336 508, 570 464, 882 424
+             L 882 500
+             C 578 540, 348 582, 150 688 Z"
+          opacity="0.74"/>
+
+    <!-- front current, solid -->
+    <path d="M 150 762
+             C 342 666, 574 622, 882 580
+             L 882 666
+             C 582 708, 354 746, 150 852 Z"/>
+  </g>
+</svg>

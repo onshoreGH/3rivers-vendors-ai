@@ -1,0 +1,6 @@
+build/
+.dart_tool/
+.packages
+*.iml
+ios-shots/
+ipad-shots/

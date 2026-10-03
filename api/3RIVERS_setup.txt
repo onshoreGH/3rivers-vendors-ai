@@ -1,0 +1,141 @@
+================================================================================
+Onshore 3Rivers AI — backend + infra setup runbook
+================================================================================
+The mobile app talks to a NEW /api/v1 layer on the existing 3Rivers portal
+API (uvicorn on 127.0.0.1:9000, systemd unit `3rivers-api.service`,
+WorkingDirectory /opt/3rivers/app on onshore01 / 10.0.0.71).
+
+Everything below needs a shell on onshore01 as root (the CC classifier
+blocks the assistant from touching /opt, /etc/nginx, and systemctl).
+
+--------------------------------------------------------------------------------
+1. KEYCLOAK — create the mobile client  (realm: onshoretech)
+--------------------------------------------------------------------------------
+Admin console: https://auth.onshoresystems.ai/admin/  → realm `onshoretech`
+→ Clients → Create client:
+
+    Client type:        OpenID Connect
+    Client ID:          3rivers-mobile
+    Name:               3Rivers Mobile
+  Next →
+    Client authentication:  OFF   (public client)
+    Authorization:          OFF
+    Standard flow:          ON
+    Direct access grants:   ON    ← REQUIRED (this is the password grant)
+  Next →
+    Valid redirect URIs:    ai.onshoretech.onshore-3rivers-ai://auth   (any value; unused by ROPC)
+    Web origins:            (leave blank)
+  Save.
+
+The client inherits the realm's user directory, so any existing 3Rivers
+staff Keycloak user can now sign in from the app. If you want a dedicated
+review/demo account for Apple, create a user in this realm (e.g.
+`appreview@onshoretech.ai`) with a password and whatever 3Rivers staff
+role your users normally have.
+
+Verify (replace USER/PASS):
+    curl -s -d 'grant_type=password&client_id=3rivers-mobile&username=USER&password=PASS&scope=openid' \
+      https://auth.onshoresystems.ai/realms/onshoretech/protocol/openid-connect/token | head -c 200
+Expect a JSON blob with "access_token". `unauthorized_client` = Direct
+access grants still off. `invalid_grant` = bad user/pass (client is fine).
+
+--------------------------------------------------------------------------------
+2. DEPLOY mobile_v1.py
+--------------------------------------------------------------------------------
+Copy api/mobile_v1.py from this repo to:  /opt/3rivers/app/mobile_v1.py
+    chown three_rivers:three_rivers /opt/3rivers/app/mobile_v1.py
+
+It needs PyJWT + cryptography in the venv (the portal already verifies
+Keycloak tokens in keycloak_auth.py, so PyJWT is present — confirm):
+    /opt/3rivers/app/venv/bin/python -c "import jwt, cryptography; print('ok')"
+If missing:
+    /opt/3rivers/app/venv/bin/pip install "PyJWT[crypto]"
+
+--------------------------------------------------------------------------------
+3. WIRE the router into main.py
+--------------------------------------------------------------------------------
+Add near the bottom of /opt/3rivers/app/main.py (after `app = FastAPI(...)`
+and all existing routes — order doesn't matter, it's its own prefix):
+
+    from mobile_v1 import router as mobile_v1_router
+    app.include_router(mobile_v1_router)
+
+(No dependency injection — mobile_v1 does its own bearer verification and
+must NOT inherit the oauth2-proxy header trust.)
+
+Optional env (defaults are correct, set in /etc/3rivers-api.env if you
+want to override):
+    KEYCLOAK_MOBILE_CLIENT_ID=3rivers-mobile
+    PUBLIC_PORTAL_URL=https://3rivers.onshoretech.ai
+
+--------------------------------------------------------------------------------
+4. NGINX — expose /api/v1/ WITHOUT oauth2-proxy
+--------------------------------------------------------------------------------
+File: /etc/nginx/conf.d/3rivers.onshoretech.ai.conf
+The existing `location /api/ { auth_request /oauth2/auth; ... }` block
+would bounce mobile clients to the Keycloak login page. Add a MORE
+SPECIFIC location ABOVE it so /api/v1/* skips oauth2-proxy:
+
+    location ^~ /api/v1/ {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60;
+    }
+
+Then:  nginx -t && systemctl reload nginx
+
+--------------------------------------------------------------------------------
+5. RESTART the API
+--------------------------------------------------------------------------------
+    systemctl restart 3rivers-api
+    systemctl status 3rivers-api --no-pager | tail -5
+    journalctl -u 3rivers-api -n 30 --no-pager     # check it imported mobile_v1 cleanly
+
+--------------------------------------------------------------------------------
+6. VERIFY end-to-end
+--------------------------------------------------------------------------------
+    TOK=$(curl -s -d 'grant_type=password&client_id=3rivers-mobile&username=USER&password=PASS&scope=openid' \
+      https://auth.onshoresystems.ai/realms/onshoretech/protocol/openid-connect/token | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+
+    # login (what the app calls)
+    curl -s -X POST https://3rivers.onshoretech.ai/api/v1/auth/login \
+      -H 'Content-Type: application/json' \
+      -d '{"username":"USER","password":"PASS"}' | head -c 300
+
+    curl -s https://3rivers.onshoretech.ai/api/v1/me         -H "Authorization: Bearer $TOK"
+    curl -s https://3rivers.onshoretech.ai/api/v1/dashboard  -H "Authorization: Bearer $TOK"
+    curl -s https://3rivers.onshoretech.ai/api/v1/work-orders -H "Authorization: Bearer $TOK" | head -c 300
+    curl -s https://3rivers.onshoretech.ai/api/v1/shipments   -H "Authorization: Bearer $TOK" | head -c 300
+    curl -s https://3rivers.onshoretech.ai/api/v1/directory   -H "Authorization: Bearer $TOK" | head -c 300
+
+    # guard: no token must be 401 (NOT a 302 to /oauth2/start)
+    curl -s -o /dev/null -w '%{http_code}\n' https://3rivers.onshoretech.ai/api/v1/dashboard
+
+--------------------------------------------------------------------------------
+7. GITHUB repo for the app
+--------------------------------------------------------------------------------
+Create  github.com/onshoreGH/onshore-3rivers  (private), then add the
+onshore03 deploy key (public key in /data/onshore-ops/onshore03-ssh-key.txt
+or ~/.ssh/id_ed25519.pub on onshore03) with write access. Then from
+onshore03:  git -C /data/onshore-ops/source/mobile/onshore-3rivers push -u origin main
+
+--------------------------------------------------------------------------------
+8. SUPPORT / PRIVACY pages  (Apple 1.5 — same problem Educate hit)
+--------------------------------------------------------------------------------
+3rivers.onshoretech.ai is 100% oauth2-gated, so it can't serve a public
+support page. Use https://onshoresystems.ai/support and
+https://onshoresystems.ai/privacy in App Store Connect (both live, valid
+cert), OR add unauthenticated location blocks to the 3rivers nginx conf
+for /support and /privacy pointing at static files (mirror what was done
+for educate — nginx-educate.conf in the earlier handoff).
+
+--------------------------------------------------------------------------------
+9. UNLISTED DISTRIBUTION  (Apple 3.2 — same as Legal/Educate)
+--------------------------------------------------------------------------------
+This is an internal staff tool → request Unlisted App Distribution at
+developer.apple.com/contact/request/unlisted-app-distribution for
+ai.onshoretech.onshore-3rivers-ai (App ID 6761303145).

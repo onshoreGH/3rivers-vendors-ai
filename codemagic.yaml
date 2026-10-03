@@ -1,0 +1,81 @@
+workflows:
+  ios-appstore:
+    name: Onshore 3Rivers AI — iOS (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      # The single App Store Connect API key connected to this account
+      # (Developer Portal integration). Same key em-powered's pipeline uses.
+      # Covers signing + publishing for every app under Apple team SC3TK2FMVZ.
+      # If a build fails with "integration not found", check the exact name
+      # at: Codemagic → Personal Settings → Integrations → Developer Portal.
+      app_store_connect: empowered_asc
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        # Automatic signing: Codemagic uses the connected ASC API key to
+        # create/fetch a distribution certificate + App Store provisioning
+        # profile for this bundle id. This is what replaces the revoked
+        # local "Apple Distribution" cert — no Xcode GUI needed.
+        distribution_type: app_store
+        bundle_identifier: ai.onshoretech.3riversv
+      vars:
+        APP_STORE_APPLE_ID: "6761303145"
+        # The app's compiled default is already
+        # https://3rivers.onshoretech.ai — this override is here only
+        # to make the target explicit / easy to point at staging.
+        API_BASE_URL: "https://3rivers.onshoretech.ai"
+    scripts:
+      - name: Flutter packages
+        script: flutter packages pub get
+      - name: Install pods
+        script: find . -name "Podfile" -maxdepth 3 -execdir pod install \;
+      - name: Set up provisioning profiles
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+        # Leave beta_groups unset — reviewers pull from the build directly.
+
+  android-playstore:
+    name: Onshore 3Rivers AI — Android (Play, closed testing)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      android_signing:
+        - onshore_3rivers_upload_keystore
+      vars:
+        API_BASE_URL: "https://3rivers.onshoretech.ai"
+    scripts:
+      - name: Flutter packages
+        script: flutter packages pub get
+      - name: Build AAB
+        script: |
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+    # Not wired to auto-publish yet -- no Google Play developer account
+    # exists for this app's applicationId (ai.onshoretech.threerivers) yet. Once the new
+    # Onshore org Play Console account is live and a service account key
+    # with Release Manager access is generated, add:
+    #   publishing:
+    #     google_play:
+    #       credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+    #       track: internal
+    # Until then, download the .aab artifact from the build and upload it
+    # to the closed testing track by hand.

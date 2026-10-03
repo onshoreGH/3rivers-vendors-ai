@@ -1,0 +1,81 @@
+================================================================================
+Onshore 3Rivers AI — App Store Connect submission checklist
+App ID 6761303145  ·  bundle ai.onshoretech.onshore-3rivers-ai  ·  v1.0 REJECTED
+================================================================================
+
+The IPA (1.0.0 build 1) is being signed + uploaded by the assistant. Once it
+shows in ASC (TestFlight tab, ~15-30 min after upload), do the following.
+
+--------------------------------------------------------------------------------
+App Information
+--------------------------------------------------------------------------------
+[ ] Name:              Onshore 3Rivers AI   (currently "Onshore 3rivers AI")
+[ ] Subtitle:          Work orders, shipments & suppliers
+[ ] Category:          Primary = Business    (Secondary = optional)
+[ ] Content Rights:    Does not contain third-party content
+[ ] Age rating:        4+
+
+--------------------------------------------------------------------------------
+Pricing and Availability
+--------------------------------------------------------------------------------
+[ ] Free
+[ ] (After the unlisted request is approved, availability becomes "unlisted")
+
+--------------------------------------------------------------------------------
+App Privacy
+--------------------------------------------------------------------------------
+[ ] Privacy Policy URL:  https://onshoresystems.ai/privacy
+[ ] Data collection: Contact Info (name, email/user ID) + User Content
+    (work/shipment records) + Diagnostics. All: linked to identity,
+    used for App Functionality only. No tracking. No ads.
+
+--------------------------------------------------------------------------------
+iOS App  ->  1.0  version page
+--------------------------------------------------------------------------------
+[ ] Screenshots: upload the 6 iPhone 6.5" + 6 iPad 12.9" from the zip
+    (repo: store/screenshots/{iphone-6.5,ipad-12.9}/)
+[ ] Description:
+      Onshore 3Rivers AI is the staff companion app for the 3Rivers
+      logistics platform. Sign in with your 3Rivers account to:
+
+      - See every open work order and shipment at a glance, with overdue
+        and late items called out first
+      - Track work orders by status (planned, released, in progress,
+        complete) with product, quantity and due dates
+      - Follow shipments lane-by-lane with carrier, tracking, ETA and
+        exception flags
+      - Look up any supplier or vendor and start a live video check-in
+        in one tap
+      - Review the email and SMS history for an account
+
+      The app connects only to your organization's 3Rivers service. Your
+      account is issued by your administrator.
+[ ] Keywords:  logistics,work orders,shipments,supplier,vendor,operations,
+               manufacturing,supply chain,3PL,tracking
+[ ] Support URL:   https://onshoresystems.ai/support
+[ ] Marketing URL: https://3rivers.onshoretech.ai   (optional)
+[ ] Build: select 1.0.0 (1) once processed
+[ ] App Review Information -> Sign-in required:
+       user: appreview@onshoretech.ai
+       pass: 003217
+[ ] App Review Notes:
+      Onshore 3Rivers AI is an internal staff tool for the 3Rivers
+      logistics operation. Use the sign-in above (it is a username).
+
+      Distribution: we are requesting Unlisted App Distribution - this app
+      is for authorized staff of a specific organization, not public
+      discovery.
+
+      Third-party AI: none. The app has no AI features and sends no data
+      to any AI provider. It talks only to our backend at
+      3rivers.onshoretech.ai.
+[ ] Version Release: Manually release this version
+[ ] Save, then Add for Review -> Submit
+
+--------------------------------------------------------------------------------
+Unlisted App Distribution (Guideline 3.2 - do this too)
+--------------------------------------------------------------------------------
+[ ] developer.apple.com/contact/request/unlisted-app-distribution
+    App: Onshore 3Rivers AI (6761303145)
+    Reason: internal tool for a single organization's staff; not intended
+    for public App Store discovery.
