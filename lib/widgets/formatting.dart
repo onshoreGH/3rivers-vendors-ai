@@ -58,3 +58,29 @@ String prettyStatus(String s) {
       RegExp(r'(?<=[a-z])(?=[A-Z])'), (_) => ' ');
   return titleCase(spaced.trim());
 }
+
+/// Money for display. Amounts arrive from the Laravel API as decimal STRINGS
+/// ("4820.00") and are parsed to double by asMoney() before reaching here.
+///
+/// Grouping is applied manually rather than via NumberFormat.currency so the
+/// app does not gain an intl locale dependency for one call site, and so the
+/// symbol stays tied to the currency the server reports rather than the
+/// device locale -- a vendor reading USD invoices on a device set to EUR
+/// should not see a euro sign against a dollar figure.
+String formatMoney(double amount, [String currency = 'USD']) {
+  final negative = amount < 0;
+  final fixed = amount.abs().toStringAsFixed(2);
+  final parts = fixed.split('.');
+  final digits = parts[0];
+
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+    buffer.write(digits[i]);
+  }
+
+  final symbol = currency == 'USD' ? r'$' : '';
+  final body = '$symbol${buffer.toString()}.${parts[1]}';
+  final suffix = symbol.isEmpty ? ' $currency' : '';
+  return '${negative ? '-' : ''}$body$suffix';
+}

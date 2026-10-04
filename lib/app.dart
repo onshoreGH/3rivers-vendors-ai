@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/api/api_client.dart';
 import 'core/api/auth_api.dart';
-import 'core/api/three_rivers_api.dart';
+import 'core/api/vendors_api.dart';
 import 'core/config/app_config.dart';
 import 'core/storage/local_prefs.dart';
 import 'core/storage/secure_token_storage.dart';
@@ -23,7 +23,7 @@ class _OnshoreThreeRiversAppState extends State<OnshoreThreeRiversApp> {
   late final SecureTokenStorage _storage;
   late final ApiClient _apiClient;
   late final AuthApi _authApi;
-  late final ThreeRiversApi _api;
+  late final VendorsApi _api;
   late final AuthController _auth;
   late final LocalPrefs _prefs;
 
@@ -38,7 +38,7 @@ class _OnshoreThreeRiversAppState extends State<OnshoreThreeRiversApp> {
       onUnauthorized: () => _auth.forceLogout(),
     );
     _authApi = AuthApi(_apiClient);
-    _api = ThreeRiversApi(_apiClient);
+    _api = VendorsApi(_apiClient);
     _auth = AuthController(
       authApi: _authApi,
       storage: _storage,
@@ -52,7 +52,7 @@ class _OnshoreThreeRiversAppState extends State<OnshoreThreeRiversApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _auth),
-        Provider<ThreeRiversApi>.value(value: _api),
+        Provider<VendorsApi>.value(value: _api),
         Provider<LocalPrefs>.value(value: _prefs),
         Provider<AppConfig>.value(value: config),
       ],
