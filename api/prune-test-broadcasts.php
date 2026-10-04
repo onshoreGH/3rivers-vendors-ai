@@ -55,9 +55,18 @@ if ($dry) {
     exit(0);
 }
 
-$backup = '/root/vendors-api-backups/broadcasts-deleted-' . date('Ymd-His') . '.json';
-@mkdir(dirname($backup), 0750, true);
-file_put_contents($backup, json_encode(array_map(static fn ($r) => (array) $r, $rows->all()), JSON_PRETTY_PRINT));
+// storage/, not /root/: this runs as www-data, which cannot write to root's
+// home. The first attempt died here -- correctly, before deleting anything,
+// because the backup is taken first on purpose.
+$backup = storage_path('app/backups/broadcasts-deleted-' . date('Ymd-His') . '.json');
+if (!is_dir(dirname($backup)) && !@mkdir(dirname($backup), 0750, true) && !is_dir(dirname($backup))) {
+    fwrite(STDERR, "!! cannot create " . dirname($backup) . " - refusing to delete without a backup\n");
+    exit(1);
+}
+if (file_put_contents($backup, json_encode(array_map(static fn ($r) => (array) $r, $rows->all()), JSON_PRETTY_PRINT)) === false) {
+    fwrite(STDERR, "!! could not write $backup - refusing to delete without a backup\n");
+    exit(1);
+}
 $say("backed up to $backup");
 
 $deleted = DB::table('broadcasts')->whereIn('id', DOOMED)->delete();
