@@ -122,11 +122,15 @@ foreach ($existingInvoices->items() as $row) {
         $alreadySeeded++;
     }
 }
-if ($alreadySeeded > 0 && !$force) {
-    $say("!! $alreadySeeded seeded invoices already present - re-run with --force to add another set");
-    if (!$prune) {
-        exit(0);
-    }
+// Skip the INSERT step when a set is already present, but still run the prune
+// below -- --prune and seeding are independent operations.
+//
+// This previously exited early only when --prune was absent, which meant
+// `--prune` on an already-seeded database pruned AND then inserted a second
+// full set. Two duplicate batches were created that way before it was caught.
+$skipSeed = $alreadySeeded > 0 && !$force;
+if ($skipSeed) {
+    $say("!! $alreadySeeded seeded invoices already present - skipping insert (use --force to add another set)");
 }
 
 // --------------------------------------------------------------------------
@@ -171,6 +175,11 @@ if ($prune && !$dry) {
 
 // --------------------------------------------------------------------------
 echo "== seed ==\n";
+if ($skipSeed) {
+    $say('skipped (already seeded)');
+    echo "\n== done ==\n";
+    exit(0);
+}
 if ($dry) {
     $say(sprintf(
         'would insert %d invoices (%d with payments), %d products, %d broadcasts',
