@@ -4,7 +4,7 @@
 class Env {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://3rivers.onshoretech.ai',
+    defaultValue: 'https://3rivers-v.onshoretech.ai',
   );
 
   static const bool friendlyNetworkErrors = bool.fromEnvironment(

@@ -27,19 +27,19 @@ class ThreeRiversConfig extends AppConfig {
   const ThreeRiversConfig();
 
   @override
-  String get appName => 'Onshore 3Rivers AI';
+  String get appName => 'Onshore 3Rivers Vendors';
 
   @override
-  String get bundleId => 'ai.onshoretech.onshore-3rivers-ai';
+  String get bundleId => 'ai.onshoretech.3riversv';
 
   @override
   String get supportEmail => 'support@onshoretech.ai';
 
   @override
-  Uri get privacyPolicyUrl => Uri.parse('https://3rivers.onshoretech.ai/privacy');
+  Uri get privacyPolicyUrl => Uri.parse('https://3rivers-v.onshoretech.ai/privacy');
 
   @override
-  Uri get termsUrl => Uri.parse('https://3rivers.onshoretech.ai/terms');
+  Uri get termsUrl => Uri.parse('https://3rivers-v.onshoretech.ai/terms');
 
   @override
   Color get seedColor => const Color(0xFF1FA463); // 3Rivers green
