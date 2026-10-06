@@ -1,7 +1,7 @@
 name: onshore_3rivers_vendors
 description: "Onshore 3Rivers AI -- staff portal for work orders, shipments, suppliers, and vendors."
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.5.4

@@ -1,6 +1,6 @@
 workflows:
   ios-appstore:
-    name: Onshore 3Rivers AI — iOS (App Store)
+    name: Onshore 3Rivers Vendors — iOS (App Store)
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
@@ -22,11 +22,11 @@ workflows:
         distribution_type: app_store
         bundle_identifier: ai.onshoretech.3riversv
       vars:
-        APP_STORE_APPLE_ID: "6761303145"
+        APP_STORE_APPLE_ID: "6760920784"
         # The app's compiled default is already
-        # https://3rivers.onshoretech.ai — this override is here only
+        # https://3rivers-v.onshoretech.ai (lib/core/config/env.dart) — this override is here only
         # to make the target explicit / easy to point at staging.
-        API_BASE_URL: "https://3rivers.onshoretech.ai"
+        API_BASE_URL: "https://3rivers-v.onshoretech.ai"
     scripts:
       - name: Flutter packages
         script: flutter packages pub get
@@ -51,15 +51,15 @@ workflows:
         # Leave beta_groups unset — reviewers pull from the build directly.
 
   android-playstore:
-    name: Onshore 3Rivers AI — Android (Play, closed testing)
+    name: Onshore 3Rivers Vendors — Android (Play, closed testing)
     max_build_duration: 60
     instance_type: linux_x2
     environment:
       flutter: stable
       android_signing:
-        - onshore_3rivers_upload_keystore
+        - onshore_3riversv_upload_keystore
       vars:
-        API_BASE_URL: "https://3rivers.onshoretech.ai"
+        API_BASE_URL: "https://3rivers-v.onshoretech.ai"
     scripts:
       - name: Flutter packages
         script: flutter packages pub get
@@ -70,7 +70,7 @@ workflows:
     artifacts:
       - build/app/outputs/bundle/release/*.aab
     # Not wired to auto-publish yet -- no Google Play developer account
-    # exists for this app's applicationId (ai.onshoretech.threerivers) yet. Once the new
+    # exists for this app's applicationId (ai.onshoretech.3riversv) yet. Once the new
     # Onshore org Play Console account is live and a service account key
     # with Release Manager access is generated, add:
     #   publishing:
