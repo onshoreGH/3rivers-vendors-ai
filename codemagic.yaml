@@ -14,13 +14,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        # Automatic signing: Codemagic uses the connected ASC API key to
-        # create/fetch a distribution certificate + App Store provisioning
-        # profile for this bundle id. This is what replaces the revoked
-        # local "Apple Distribution" cert — no Xcode GUI needed.
-        distribution_type: app_store
-        bundle_identifier: ai.onshoretech.3riversv
       vars:
         APP_STORE_APPLE_ID: "6760920784"
         # The app's compiled default is already
@@ -32,8 +25,19 @@ workflows:
         script: flutter packages pub get
       - name: Install pods
         script: find . -name "Podfile" -maxdepth 3 -execdir pod install \;
-      - name: Set up provisioning profiles
-        script: xcode-project use-profiles
+      - name: Fetch signing files and set up profiles
+        script: |
+          # Explicit, not automatic. Codemagic's automatic signing reported
+          # "No matching profiles found" for this bundle while the profile
+          # was demonstrably ACTIVE, so it was querying a different team or
+          # key. These three env vars come from the app_store_connect
+          # integration; --create makes the profile if the lookup is empty.
+          app-store-connect fetch-signing-files "ai.onshoretech.3riversv" \
+            --type IOS_APP_STORE \
+            --create
+          keychain initialize
+          keychain add-certificates
+          xcode-project use-profiles
       - name: Build IPA
         script: |
           flutter build ipa --release \
